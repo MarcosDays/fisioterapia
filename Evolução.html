@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Evolução e Admissão Fisioterapêutica</title>
+    <style>
+        /* Variáveis de Cores (Padrão: Claro) */
+        :root {
+            --primary-color: #004d99; /* Azul Escuro */
+            --secondary-color: #28a745; /* Verde */
+            --background-color: #f8f9fa;
+            --container-bg: #fff;
+            --text-color: #343a40;
+            --border-color: #ced4da;
+            --light-blue: #e0f0ff;
+            --input-bg: #fff;
+            --input-border-focus: var(--primary-color);
+        }
+        
+        /* Variáveis de Cores (Modo Escuro) */
+        .dark-mode {
+            --primary-color: #5d9cec; /* Azul Claro */
+            --secondary-color: #4CAF50; /* Verde */
+            --background-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #333;
+            --light-blue: #303030;
+            --input-bg: #2b2b2b;
+            --input-border-focus: var(--primary-color);
+        }
+
+        /* Estilos Base */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s, box-shadow 0.3s;
+            position: relative; /* Para posicionamento absoluto dos botões de topo */
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--light-blue);
+            padding-bottom: 10px;
+        }
+        
+        /* Botões de Toggle (Modo e Função) */
+        .header-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        #mode-toggle, #form-toggle {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #mode-toggle:hover, #form-toggle:hover {
+            opacity: 0.9;
+            background-color: #003366;
+        }
+        
+        /* Campos e Fieldsets */
+        fieldset {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            background-color: var(--container-bg);
+        }
+
+        legend {
+            font-weight: bold;
+            color: var(--primary-color);
+            padding: 0 10px;
+            font-size: 1.2em;
+            border-bottom: none;
+        }
+
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .form-field {
+            flex: 1 1 calc(50% - 20px);
+            min-width: 250px;
+        }
+        
+        .full-width {
+            flex: 1 1 100%;
+        }
+        
+        label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        input[type="text"], 
+        input[type="date"], 
+        input[type="number"], 
+        select, 
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-sizing: border-box;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--input-border-focus);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 77, 153, 0.3);
+        }
+        
+        textarea {
+            resize: vertical;
+        }
+        
+        /* Estilos Condutas Dinâmicas (Evolução) */
+        #condutas-list div {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .remove-conduta-btn {
+            flex-grow: 0;
+            width: 40px;
+            background-color: #dc3545; /* Vermelho */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 5px;
+            align-self: flex-end;
+            font-weight: bold;
+            font-size: 1em;
+            height: 44px;
+        }
+        .remove-conduta-btn:hover {
+            background-color: #c82333;
+        }
+        
+        #add-conduta-btn {
+            background-color: var(--primary-color);
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+        #add-conduta-btn:hover {
+            background-color: #003366;
+            transform: none;
+        }
+
+        /* Estilo dos Botões de Ação Final */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        #gerar-evolucao-btn, #gerar-admissao-btn {
+            background-color: var(--secondary-color); /* Verde */
+        }
+        
+        #gerar-evolucao-btn:hover, #gerar-admissao-btn:hover {
+            background-color: #1e7e34;
+        }
+
+        #copiar-btn, #pdf-btn {
+            background-color: var(--primary-color); /* Azul Escuro */
+        }
+
+        #copiar-btn:hover, #pdf-btn:hover {
+            background-color: #003366;
+        }
+
+        /* Estilo da Área de Resultado */
+        #resultado-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--light-blue);
+        }
+
+        #evolucao-output {
+            width: 100%;
+            min-height: 350px;
+            border: 2px solid var(--primary-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            background-color: var(--light-blue);
+            color: var(--text-color);
+            border-radius: 6px;
+            font-size: 1.0em;
+        }
+        
+        /* Estilos de impressão (para gerar o PDF) */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #resultado-container, #resultado-container * {
+                visibility: visible;
+            }
+            #resultado-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
+            h2, #evolucao-output {
+                color: #000;
+                background-color: #fff;
+                border: none;
+                box-shadow: none;
+                margin-top: 0;
+                font-family: 'Times New Roman', serif;
+                white-space: pre-wrap;
+                font-size: 12pt;
+                min-height: auto;
+            }
+            .button-group, p, .header-controls, h1 {
+                display: none; /* Esconde botões e aviso de cópia na impressão */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header-controls">
+            <button id="form-toggle">Mudar para Admissão (Anamnese)</button>
+            <button id="mode-toggle">Modo Escuro</button>
+        </div>
+        
+        <h1 id="main-title">Gerador de Evolução Fisioterapêutica</h1>
+
+        <div id="evolucao-section">
+            <form id="evolucao-form">
+                
+                <fieldset>
+                    <legend>Informações do Paciente</legend>
+                    <div class="form-group">
+                        <div class="form-field"><label for="paciente_ev">Paciente:</label><input type="text" id="paciente_ev" required></div>
+                        <div class="form-field"><label for="data_ev">Data (DD/MM/AAAA):</label><input type="date" id="data_ev" required></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-field"><label for="situacao_inicial">Paciente encontrada:</label><input type="text" id="situacao_inicial" placeholder="Ex: na cama, sentada, deambulando" required></div>
+                        <div class="form-field"><label for="presenca">Presença (quem está acompanhando):</label><input type="text" id="presenca" placeholder="Ex: familiar, técnico de enfermagem" required></div>
+                    </div>
+                    <div class="form-field">
+                        <label for="ventilacao">Ventilação:</label>
+                        <select id="ventilacao" required>
+                            <option value="em ventilação espontânea ao ar ambiente">em ventilação espontânea ao ar ambiente</option>
+                            <option value="em O2 por cateter nasal">em O2 por cateter nasal</option>
+                            <option value="em O2 por máscara">em O2 por máscara</option>
+                            <option value="em ventilação mecânica">em ventilação mecânica</option>
+                        </select>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Avaliação Motora e Dor</legend>
+                    <div class="form-group">
+                        <div class="form-field"><label for="forca_muscular">Força Muscular (Grau):</label><input type="number" id="forca_muscular" min="0" max="5" placeholder="Grau 0 a 5" required></div>
+                        <div class="form-field">
+                            <label for="dor_status">Relato de Dor:</label>
+                            <select id="dor_status" required>
+                                <option value="não relatou dor nas pernas" selected>Não Relatou Dor</option>
+                                <option value="relatou dor leve nas pernas">Relatou Dor Leve</option>
+                                <option value="relatou dor moderada nas pernas">Relatou Dor Moderada</option>
+                                <option value="relatou dor intensa nas pernas">Relatou Dor Intensa</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-field"><label for="pes_tornozelos">Pés e Tornozelos:</label><input type="text" id="pes_tornozelos" placeholder="Ex: preservados, edemaciados (+/4+), com limitações" required></div>
+                        <div class="form-field"><label for="extremidades_maos">Extremidades das Mãos:</label><input type="text" id="extremidades_maos" placeholder="Ex: preservadas, com edema, cianóticas" required></div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Monitorização Cardiorrespiratória</legend>
+                    
+                    <div class="form-field"><label for="ausculta_pulmonar">Ausculta Pulmonar:</label><input type="text" id="ausculta_pulmonar" placeholder="Ex: Murmúrios vesiculares presentes em todas as áreas." required></div>
+
+                    <h3>Antes do Exercício</h3>
+                    <div class="form-group">
+                        <div class="form-field"><label for="pa_antes">PA antes (mmHg):</label><input type="text" id="pa_antes" placeholder="Ex: 120/80" required></div>
+                        <div class="form-field"><label for="fc_antes">FC antes (bpm):</label><input type="number" id="fc_antes" min="1" required></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-field"><label for="fr_antes">FR antes (rpm):</label><input type="number" id="fr_antes" min="1" required></div>
+                        <div class="form-field"><label for="sat_antes">Saturação antes (%):</label><input type="number" id="sat_antes" min="80" max="100" required></div>
+                    </div>
+
+                    <h3>Pós-Exercício</h3>
+                    <div class="form-group">
+                        <div class="form-field"><label for="pa_pos">PA pós (mmHg):</label><input type="text" id="pa_pos" placeholder="Ex: 130/85" required></div>
+                        <div class="form-field"><label for="fc_pos">FC pós (bpm):</label><input type="number" id="fc_pos" min="1" required></div>
+                        <div class="form-field" style="flex: 1 1 100%; max-width: 100%;"><label for="sat_pos">Saturação pós (%):</label><input type="number" id="sat_pos" min="80" max="100" required></div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Condutas e Atendimento</legend>
+                    
+                    <div class="form-field">
+                        <label>Condutas Específicas:</label>
+                        <div id="condutas-list">
+                            <div>
+                                <input type="text" class="conduta-input" placeholder="Ex: Treino de marcha no leito/corredor." required>
+                                <button type="button" class="remove-conduta-btn" disabled>X</button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-conduta-btn">Adicionar Conduta</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-field">
+                            <label for="intercorrencias">Finalização (Houve Intercorrências?):</label>
+                            <select id="intercorrencias" required>
+                                <option value="sem">Sem Intercorrências</option>
+                                <option value="com">Com Intercorrências</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="intercorrencias_obs">(Se Com, descrever a intercorrência):</label>
+                            <input type="text" id="intercorrencias_obs" placeholder="Ex: Pequena dessaturação revertida com manobra de reexpansão." disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-field"><label for="estagiario_ev">Estagiário:</label><input type="text" id="estagiario_ev" required></div>
+                        <div class="form-field"><label for="supervisor_ev">Supervisor:</label><input type="text" id="supervisor_ev" required></div>
+                    </div>
+                </fieldset>
+                
+                <button type="submit" id="gerar-evolucao-btn">Gerar e Copiar Evolução</button>
+            </form>
+        </div>
+        
+        <div id="admissao-section" style="display:none;">
+            <form id="admissao-form">
+
+                <fieldset>
+                    <legend>Informações de Admissão</legend>
+                    <div class="form-group">
+                        <div class="form-field"><label for="paciente_adm">Paciente:</label><input type="text" id="paciente_adm" required></div>
+                        <div class="form-field"><label for="data_adm">Data (DD/MM/AAAA):</label><input type="date" id="data_adm" required></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-field"><label for="estagiario_adm">Estagiário:</label><input type="text" id="estagiario_adm" required></div>
+                        <div class="form-field"><label for="supervisor_adm">Supervisor:</label><input type="text" id="supervisor_adm" required></div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Anamnese e Histórico</legend>
+                    <div class="form-field full-width">
+                        <label for="queixa">Queixa do Paciente:</label>
+                        <textarea id="queixa" rows="3" placeholder="Qual o principal motivo da avaliação?" required></textarea>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="historia_atual">História Atual:</label>
+                        <textarea id="historia_atual" rows="4" placeholder="Detalhes dos sintomas e evolução recente." required></textarea>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="historia_pregressa">História Pregressa (Morbidades):</label>
+                        <textarea id="historia_pregressa" rows="3" placeholder="Doenças crônicas, alergias, comorbidades." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-field"><label for="historico_cirurgia">Histórico de Cirurgia:</label><input type="text" id="historico_cirurgia" placeholder="Quais cirurgias e datas?"></div>
+                        <div class="form-field"><label for="historico_quedas">Histórico de Quedas:</label><input type="text" id="historico_quedas" placeholder="Data, local e consequências."></div>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="medicamentos">Medicamentos em Uso:</label>
+                        <textarea id="medicamentos" rows="2" placeholder="Lista dos medicamentos atuais." required></textarea>
+                    </div>
+                </fieldset>
+                
+                <fieldset>
+                    <legend>Avaliação e Plano</legend>
+                    <div class="form-field full-width">
+                        <label for="exame_fisico">Exame Físico (Achados):</label>
+                        <textarea id="exame_fisico" rows="5" placeholder="Sinais vitais, inspeção, palpação, testes de força e mobilidade." required></textarea>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="exame_bioimagem">Exame de Bioimagem:</label>
+                        <textarea id="exame_bioimagem" rows="3" placeholder="Raio X, TC, RNM (resultados e relevância)." required></textarea>
+                    </div>
+                    
+                    <div class="form-field full-width">
+                        <label for="alteracao">Diagnóstico Fisioterapêutico (Alteração musculoesquelética devido a...):</label>
+                        <input type="text" id="alteracao" placeholder="Ex: Síndrome do Túnel do Carpo, AVC, Fratura." required>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="restricao">...com restrição para:</label>
+                        <input type="text" id="restricao" placeholder="Ex: atividades de vida diária, deambulação." required>
+                    </div>
+                    
+                    <div class="form-field full-width">
+                        <label for="plano_curto">Plano de Tratamento (Curto Prazo):</label>
+                        <textarea id="plano_curto" rows="2" placeholder="Metas imediatas (1 semana)." required></textarea>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="plano_medio">Plano de Tratamento (Médio Prazo):</label>
+                        <textarea id="plano_medio" rows="2" placeholder="Metas intermediárias (1-3 meses)." required></textarea>
+                    </div>
+                    <div class="form-field full-width">
+                        <label for="plano_longo">Plano de Tratamento (Longo Prazo):</label>
+                        <textarea id="plano_longo" rows="2" placeholder="Metas finais (3+ meses)." required></textarea>
+                    </div>
+                </fieldset>
+                
+                <button type="submit" id="gerar-admissao-btn">Gerar e Copiar Admissão</button>
+            </form>
+        </div>
+        
+        <div id="resultado-container" style="display: none;">
+            <h2>Texto Gerado:</h2>
+            <textarea id="evolucao-output" rows="15" readonly></textarea>
+            <div class="button-group">
+                <button type="button" id="copiar-btn">Copiar Novamente</button>
+                <button type="button" id="pdf-btn">Gerar PDF (Imprimir)</button>
+            </div>
+            <p style="text-align: center; font-style: italic; color: #555; margin-top: 10px;">O texto foi copiado automaticamente após a geração!</p>
+        </div>
+    </div>
+
+    <script>
+        // Código JavaScript
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elementos Comuns
+            const mainTitle = document.getElementById('main-title');
+            const evolucaoSection = document.getElementById('evolucao-section');
+            const admissaoSection = document.getElementById('admissao-section');
+            const formToggleBtn = document.getElementById('form-toggle');
+            const modeToggleBtn = document.getElementById('mode-toggle');
+            const evolucaoOutput = document.getElementById('evolucao-output');
+            const resultadoContainer = document.getElementById('resultado-container');
+            const copiarBtn = document.getElementById('copiar-btn');
+            const pdfBtn = document.getElementById('pdf-btn');
+
+            // Elementos da Evolução
+            const evolucaoForm = document.getElementById('evolucao-form');
+            const condutasList = document.getElementById('condutas-list');
+            const addCondutaBtn = document.getElementById('add-conduta-btn');
+            const intercorrenciasSelect = document.getElementById('intercorrencias');
+            const intercorrenciasObs = document.getElementById('intercorrencias_obs');
+            
+            // Elementos da Admissão
+            const admissaoForm = document.getElementById('admissao-form');
+            
+
+            let currentForm = 'evolucao'; // Estado inicial
+
+            // --- Funções Auxiliares ---
+
+            const formatarData = (dataInput) => {
+                const [ano, mes, dia] = dataInput.split('-');
+                if (ano && mes && dia) {
+                     return `${dia}/${mes}/${ano}`;
+                }
+                return dataInput;
+            };
+
+            const copiarTexto = (texto, buttonElement) => {
+                navigator.clipboard.writeText(texto).then(() => {
+                    const originalText = buttonElement.textContent;
+                    
+                    buttonElement.textContent = 'Copiado com Sucesso!';
+                    buttonElement.style.backgroundColor = '#1e7e34'; // Verde de sucesso
+                    
+                    setTimeout(() => {
+                        buttonElement.textContent = originalText;
+                        // Reverte a cor baseada no ID do botão e no tema
+                        buttonElement.style.backgroundColor = (buttonElement.id === 'gerar-evolucao-btn' || buttonElement.id === 'gerar-admissao-btn') ? 'var(--secondary-color)' : 'var(--primary-color)';
+                    }, 2000);
+                }).catch(err => {
+                    alert('Erro ao copiar o texto. Por favor, copie manualmente.');
+                });
+            };
+
+            // --- Lógica de Alternância (Evolução/Admissão) ---
+
+            const toggleForm = () => {
+                if (currentForm === 'evolucao') {
+                    // Mudar para Admissão
+                    evolucaoSection.style.display = 'none';
+                    admissaoSection.style.display = 'block';
+                    mainTitle.textContent = 'Gerador de Admissão (Anamnese)';
+                    formToggleBtn.textContent = 'Mudar para Evolução';
+                    currentForm = 'admissao';
+                } else {
+                    // Mudar para Evolução
+                    evolucaoSection.style.display = 'block';
+                    admissaoSection.style.display = 'none';
+                    mainTitle.textContent = 'Gerador de Evolução Fisioterapêutica';
+                    formToggleBtn.textContent = 'Mudar para Admissão (Anamnese)';
+                    currentForm = 'evolucao';
+                }
+                resultadoContainer.style.display = 'none'; // Esconde o resultado ao trocar de formulário
+            };
+
+            formToggleBtn.addEventListener('click', toggleForm);
+
+
+            // --- Lógica de Modo Escuro/Claro ---
+            
+            const loadTheme = () => {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.body.classList.toggle('dark-mode', theme === 'dark');
+                modeToggleBtn.textContent = theme === 'dark' ? 'Modo Claro' : 'Modo Escuro';
+            };
+
+            const toggleTheme = () => {
+                const isDark = document.body.classList.toggle('dark-mode');
+                const theme = isDark ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+                modeToggleBtn.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+            };
+
+            modeToggleBtn.addEventListener('click', toggleTheme);
+            loadTheme(); // Carrega o tema ao iniciar
+
+            
+            // --- Lógica de Admissão (Anamnese) ---
+            
+            admissaoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const paciente = document.getElementById('paciente_adm').value.trim().toUpperCase();
+                const dataRaw = document.getElementById('data_adm').value;
+                const dataFormatada = formatarData(dataRaw);
+                const estagiario = document.getElementById('estagiario_adm').value.trim();
+                const supervisor = document.getElementById('supervisor_adm').value.trim();
+                
+                const queixa = document.getElementById('queixa').value.trim();
+                const historiaAtual = document.getElementById('historia_atual').value.trim();
+                const historiaPregressa = document.getElementById('historia_pregressa').value.trim();
+                const historicoCirurgia = document.getElementById('historico_cirurgia').value.trim();
+                const historicoQuedas = document.getElementById('historico_quedas').value.trim();
+                const medicamentos = document.getElementById('medicamentos').value.trim();
+                const exameFisico = document.getElementById('exame_fisico').value.trim();
+                const exameBioimagem = document.getElementById('exame_bioimagem').value.trim();
+                
+                const alteracao = document.getElementById('alteracao').value.trim();
+                const restricao = document.getElementById('restricao').value.trim();
+                const planoCurto = document.getElementById('plano_curto').value.trim();
+                const planoMedio = document.getElementById('plano_medio').value.trim();
+                const planoLongo = document.getElementById('plano_longo').value.trim();
+
+                // REMOÇÃO DOS ** EM TODAS AS CHAVES DA ADMISSÃO
+                const diagnosticoFisio = `Alteração musculoesquelética devido a ${alteracao} com restrição para ${restricao}.`;
+
+                const admissao = `
+ANAMNESE FISIOTERAPÊUTICA
+Paciente: ${paciente}
+Data: ${dataFormatada}
+
+Queixa do paciente: ${queixa}
+
+História atual: ${historiaAtual}
+
+História pregressa: ${historiaPregressa}
+
+Histórico de cirurgia: ${historicoCirurgia}
+
+Histórico de quedas: ${historicoQuedas}
+
+Medicamentos: ${medicamentos}
+
+Exame físico: ${exameFisico}
+
+Exame de bioimagem: ${exameBioimagem}
+
+Diagnóstico Fisioterapêutico: ${diagnosticoFisio}
+
+Plano de Tratamento:
+- Curto Prazo: ${planoCurto}
+- Médio Prazo: ${planoMedio}
+- Longo Prazo: ${planoLongo}
+
+Atendimento realizado pelo estagiário ${estagiario}, da Faculdade Santa Casa, sob supervisão de ${supervisor}.
+                `.trim();
+
+                evolucaoOutput.value = admissao;
+                resultadoContainer.style.display = 'block';
+                copiarTexto(admissao, document.getElementById('gerar-admissao-btn'));
+                resultadoContainer.scrollIntoView({ behavior: 'smooth' });
+            });
+
+
+            // --- Lógica da Evolução (Manutenção da funcionalidade) ---
+
+            // Habilita/Desabilita campo de observação de intercorrência
+            intercorrenciasSelect.addEventListener('change', () => {
+                const isComIntercorrencia = intercorrenciasSelect.value === 'com';
+                intercorrenciasObs.disabled = !isComIntercorrencia;
+                intercorrenciasObs.required = isComIntercorrencia;
+                if (!isComIntercorrencia) {
+                    intercorrenciasObs.value = ''; 
+                }
+            });
+
+            // Lógica de Condutas Dinâmicas
+            const updateRemoveButtons = () => {
+                const removeBtns = document.querySelectorAll('.remove-conduta-btn');
+                if (removeBtns.length === 1) {
+                    removeBtns[0].disabled = true;
+                } else {
+                    removeBtns.forEach(btn => btn.disabled = false);
+                }
+            };
+
+            const addConduta = (initialValue = '') => {
+                const div = document.createElement('div');
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'conduta-input';
+                input.placeholder = 'Digite a conduta específica';
+                input.value = initialValue;
+                input.required = true;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-conduta-btn';
+                removeBtn.textContent = 'X';
+                removeBtn.addEventListener('click', () => {
+                    condutasList.removeChild(div);
+                    updateRemoveButtons();
+                });
+                
+                div.appendChild(input);
+                div.appendChild(removeBtn);
+                condutasList.appendChild(div);
+                updateRemoveButtons();
+            };
+
+            // Adiciona listener para a conduta inicial
+            document.querySelector('#condutas-list div:first-child .remove-conduta-btn').addEventListener('click', (e) => {
+                condutasList.removeChild(e.target.parentElement);
+                updateRemoveButtons();
+            });
+            updateRemoveButtons(); 
+
+            addCondutaBtn.addEventListener('click', () => {
+                addConduta();
+                document.querySelector('#condutas-list div:last-child input').focus();
+            });
+            
+            // Gerar Evolução
+            evolucaoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                // 1. Coletando dados dinâmicos das condutas
+                const condutaInputs = document.querySelectorAll('.conduta-input');
+                const condutasArray = Array.from(condutaInputs).map(input => input.value.trim()).filter(c => c.length > 0);
+                
+                let condutasTexto = '';
+                if (condutasArray.length > 0) {
+                     condutasTexto = condutasArray.map(c => `- ${c};`).join('\n');
+                } else {
+                     condutasTexto = '- Não foram registradas condutas específicas.';
+                }
+                
+                // 2. Coletando dados estáticos
+                const dataRaw = document.getElementById('data_ev').value;
+                const dataFormatada = formatarData(dataRaw);
+                
+                const paciente = document.getElementById('paciente_ev').value.trim().toUpperCase();
+                const situacaoInicial = document.getElementById('situacao_inicial').value.trim().toLowerCase();
+                const presenca = document.getElementById('presenca').value.trim().toLowerCase();
+                const ventilacao = document.getElementById('ventilacao').value;
+                const forcaMuscular = document.getElementById('forca_muscular').value.trim();
+                const dorStatus = document.getElementById('dor_status').value; 
+                const pesTornozelos = document.getElementById('pes_tornozelos').value.trim().toLowerCase();
+                const extremidadesMaos = document.getElementById('extremidades_maos').value.trim().toLowerCase();
+                const auscultaPulmonar = document.getElementById('ausculta_pulmonar').value.trim();
+                const paAntes = document.getElementById('pa_antes').value.trim();
+                const fcAntes = document.getElementById('fc_antes').value.trim();
+                const frAntes = document.getElementById('fr_antes').value.trim();
+                const satAntes = document.getElementById('sat_antes').value.trim();
+                const paPos = document.getElementById('pa_pos').value.trim();
+                const fcPos = document.getElementById('fc_pos').value.trim();
+                const satPos = document.getElementById('sat_pos').value.trim();
+                const intercorrenciasTipo = document.getElementById('intercorrencias').value;
+                const estagiario = document.getElementById('estagiario_ev').value.trim();
+                const supervisor = document.getElementById('supervisor_ev').value.trim();
+
+                let intercorrenciasMsg;
+                if (intercorrenciasTipo === 'sem') {
+                    intercorrenciasMsg = 'sem';
+                } else {
+                    const obs = intercorrenciasObs.value.trim();
+                    intercorrenciasMsg = `com a seguinte intercorrência: ${obs}`; 
+                }
+                
+                const dorRelato = `A paciente ${dorStatus}.`;
+
+                // 3. Montagem da Evolução
+                const evolucao = `
+EVOLUÇÃO DA FISIOTERAPIA
+Paciente: ${paciente}
+Data: ${dataFormatada}
+Paciente encontrada ${situacaoInicial}, na presença da(o) ${presenca} e ${ventilacao}.
+Presença de amplitude de movimento, presença de força muscular grau ${forcaMuscular} nos principais grupos musculares.
+${dorRelato}
+Pés e tornozelos ${pesTornozelos}.
+As extremidades dos dedos das mãos estão ${extremidadesMaos}.
+
+Monitorização cardiorrespiratória:
+- Ausculta pulmonar = ${auscultaPulmonar}
+- Pressão arterial antes do exercício = ${paAntes}mmHg
+- Frequência cardíaca antes dos exercícios = ${fcAntes}bpm
+- Frequência respiratória antes dos exercícios = ${frAntes}rpm
+- Saturação antes = ${satAntes}%
+- PA pós-exercícios = ${paPos}mmHg
+- FC pós-exercícios = ${fcPos}bpm
+- Saturação pós-exercício = ${satPos}%
+
+Condutas:
+- Monitorização cardiorrespiratória;
+${condutasTexto}
+
+Dado atendimento respiratório e motor. O atendimento foi finalizado ${intercorrenciasMsg} intercorrências. Deixo o paciente estável. Estou à disposição para qualquer esclarecimento.
+O atendimento foi realizado pelo estagiário ${estagiario}, da Faculdade Santa Casa, sob supervisão de ${supervisor}.
+                `.trim();
+
+                // 4. Exibir, copiar e rolar
+                evolucaoOutput.value = evolucao;
+                resultadoContainer.style.display = 'block';
+                copiarTexto(evolucao, document.getElementById('gerar-evolucao-btn'));
+                resultadoContainer.scrollIntoView({ behavior: 'smooth' });
+            });
+
+
+            // --- Ações dos Botões de Resultado (Comum) ---
+            
+            copiarBtn.addEventListener('click', () => {
+                copiarTexto(evolucaoOutput.value, copiarBtn);
+            });
+            
+            pdfBtn.addEventListener('click', () => {
+                window.print();
+            });
+        });
+    </script>
+</body>
+</html>
